@@ -1,10 +1,15 @@
 package edu.pucmm.eict.db;
 
 
+import edu.pucmm.eict.Main;
+
 import javax.persistence.*;
 import javax.persistence.criteria.CriteriaQuery;
 import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
 
 public class GestionDb<T> {
 
@@ -14,7 +19,11 @@ public class GestionDb<T> {
 
     public GestionDb(Class<T> claseEntidad) {
         if(emf == null) {
-            emf = Persistence.createEntityManagerFactory("MiUnidadPersistencia");
+            if(Main.getModoConexion().equalsIgnoreCase("Heroku")){
+                emf = getConfiguracionBaseDatosHeroku();
+            }else{
+                emf = Persistence.createEntityManagerFactory("MiUnidadPersistencia");
+            }
         }
         this.claseEntidad = claseEntidad;
 
@@ -22,6 +31,33 @@ public class GestionDb<T> {
 
     public EntityManager getEntityManager(){
         return emf.createEntityManager();
+    }
+
+    /**
+     * Configurar información de la conexión de Heroku.
+     * Tomado de https://gist.github.com/mlecoutre/4088178
+     * @return
+     */
+    private EntityManagerFactory getConfiguracionBaseDatosHeroku(){
+        //Leyendo la información de la variable de ambiente de Heroku
+        String databaseUrl = System.getenv("DATABASE_URL");
+        StringTokenizer st = new StringTokenizer(databaseUrl, ":@/");
+        //Separando las información del conexión.
+        String dbVendor = st.nextToken();
+        String userName = st.nextToken();
+        String password = st.nextToken();
+        String host = st.nextToken();
+        String port = st.nextToken();
+        String databaseName = st.nextToken();
+        //creando la jbdc String
+        String jdbcUrl = String.format("jdbc:postgresql://%s:%s/%s?sslmode=require", host, port, databaseName);
+        //pasando las propiedades.
+        Map<String, String> properties = new HashMap<>();
+        properties.put("javax.persistence.jdbc.url", jdbcUrl );
+        properties.put("javax.persistence.jdbc.user", userName );
+        properties.put("javax.persistence.jdbc.password", password );
+        //
+        return Persistence.createEntityManagerFactory("Heroku", properties);
     }
 
 
@@ -153,7 +189,4 @@ public class GestionDb<T> {
         }
         return;
     }
-
-
-
 }

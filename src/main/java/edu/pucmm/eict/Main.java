@@ -1,14 +1,16 @@
 package edu.pucmm.eict;
 
 import edu.pucmm.eict.db.BootStrapServices;
-import edu.pucmm.eict.db.ProductoCarritoServices;
 import edu.pucmm.eict.util.*;
 import io.javalin.Javalin;
 
-import java.math.BigDecimal;
+
 import java.sql.SQLException;
 
 public class Main {
+    //indica el modo de operacion para la base de datos.
+    private static String modoConexion = "";
+
     public static void main(String[] args) throws SQLException {
 
         Administracion administracion = new Administracion(); /*
@@ -16,6 +18,15 @@ public class Main {
         -Lista de productos visible por todo el sistema (Apartado 3)
         */
 
+        if(args.length >= 1){
+            modoConexion = args[0];
+            System.out.println("Modo de Operacion: "+modoConexion);
+        }
+
+        //Iniciando la base de datos.
+        if(modoConexion.isEmpty()) {
+            BootStrapServices.getInstancia().init();
+        }
 
         //Creando la instancia del servidor.
         Javalin app = Javalin.create(config ->{
@@ -44,5 +55,12 @@ public class Main {
         return 7000; //Retorna el puerto por defecto en caso de no estar en Heroku.
     }
 
+    /**
+     * Nos
+     * @return
+     */
+    public static String getModoConexion(){
+        return modoConexion;
+    }
 }
 
